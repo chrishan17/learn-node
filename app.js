@@ -6,16 +6,14 @@ const staticFile = (req, res) => {
   const suffix = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '')
   const staticPath = path.join(__dirname, 'public', suffix === '/' ? '/index.html' : suffix)
 
-  fs.readFile(staticPath, (err, data) => {
-    if (err) {
-      res.writeHead(404)
-      res.write('404 Not Found')
-      res.end()
-    }
-    res.writeHead(200)
-    res.write(data)
+  const stream = fs.createReadStream(staticPath)
+  stream.on('error', (err) => {
+    res.writeHead(404)
+    res.write('404 Not Found')
     res.end()
-  }) 
+  })
+  res.statusCode = 200
+  stream.pipe(res)
 }
 
 const app = http.createServer(staticFile)
