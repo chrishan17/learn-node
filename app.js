@@ -3,24 +3,31 @@ const url = require('url')
 const path = require('path')
 const fs = require('fs')
 
-const router = (req, res) => {
-  let pathname = url.parse(req.url).pathname
-  switch (pathname) {
+const myExpress = () => {
+  const middlewares = []
+  const express = (req, res) => {
+    middlewares.forEach(middleware => middleware(req, res))
+  }
+  express.use = middleware => middlewares.push(middleware)
+  return express
+}
+
+const router = (req, res, next) => {
+  req.pathname = url.parse(req.url).pathname
+  switch (req.pathname) {
     case '/login':
-      pathname = 'login.html'
+      req.pathname = 'login.html'
       break
     case '/index':
     case '/':
-      pathname = 'index.html'
+      req.pathname = 'index.html'
       break
     default:
   }
-
-  staticFile(pathname, res)
 }
 
-const staticFile = (pathname, res) => {
-  const staticPath = path.join(__dirname, 'public', pathname)
+const staticFile = (req, res) => {
+  const staticPath = path.join(__dirname, 'public', req.pathname)
   const stream = fs.createReadStream(staticPath)
   stream.on('error', (err) => {
     res.writeHead(404)
@@ -31,8 +38,13 @@ const staticFile = (pathname, res) => {
   stream.pipe(res)
 }
 
-const app = http.createServer(router)
+const app = myExpress()
 
-app.listen(3000, () => {
+app.use(router)
+app.use(staticFile)
+
+const server = http.createServer(app)
+
+server.listen(3000, () => {
   console.log('listening on localhost:3000')
 })
