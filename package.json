@@ -2,5 +2,10 @@
   "name": "http",
   "version": "1.0.0",
   "main": "app.js",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "logger": "0.0.1",
+    "morgan": "^1.9.0",
+    "send": "^0.16.2"
+  }
 }
