@@ -3,14 +3,14 @@ const url = require('url')
 const resolve = require('path').resolve
 const send = require('send')
 const fs = require('fs')
+const logger = require('morgan')
 
 const myExpress = () => {
   const middlewares = []
   const express = (req, res) => {
-    middlewares.reduce((prev, next) => {
-      prev(req, res, next)
-      return next
-    })
+    middlewares.slice(0, -1).reduceRight((prev, next) => {
+      return next.bind(null, req, res, prev)
+    }, middlewares.slice(-1)[0].bind(null, req, res))(req, res)
   }
   express.use = middleware => middlewares.push(middleware)
   return express
@@ -25,7 +25,7 @@ const staticFile = (path, options) => {
     const stream = send(req, pathname, opts)
     stream.on('error', () => {
       res.root = opts.root
-      next(req, res)
+      next()
     })
     stream.on('file', () => {
       res.statusCode = 200
@@ -52,6 +52,7 @@ const router = (req, res, next) => {
 
 const app = myExpress()
 
+app.use(logger('dev'))
 app.use(staticFile('public'))
 app.use(router)
 
